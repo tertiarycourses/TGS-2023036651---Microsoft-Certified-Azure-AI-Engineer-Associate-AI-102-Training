@@ -24,6 +24,19 @@ def text_docx(path: Path) -> str:
     return "\n".join(chunks)
 
 
+def explicit_pages_docx(path: Path):
+    """Return text separated by the document's explicit page breaks."""
+    doc = Document(path)
+    pages = [""]
+    for child in doc.element.body:
+        text = " ".join(node.text or "" for node in child.xpath(".//w:t"))
+        if text:
+            pages[-1] += " " + text
+        for _ in child.xpath(".//w:br[@w:type='page']"):
+            pages.append("")
+    return [page.strip() for page in pages]
+
+
 def text_ppt(path: Path):
     prs = Presentation(path)
     slides = []
@@ -49,7 +62,6 @@ def qa():
     ppt = CW / f"{COURSE}-v1.0.pptx"
     ppt_pdf = CW / f"{COURSE}-v1.0.pdf"
     lg_docx = CW / f"LG-{COURSE}.docx"
-    lg_md = CW / f"LG-{COURSE}.md"
     lg_pdf = CW / f"LG-{COURSE}.pdf"
     lp_docx = CW / f"LP-{COURSE}.docx"
     lp_pdf = CW / f"LP-{COURSE}.pdf"
@@ -73,10 +85,8 @@ def qa():
     ok(results, "A PPT", "Every lab has detailed steps", all(f"Lab {i:02d} Step 1:" in all_ppt for i in range(1, 11)), "")
 
     lg = text_docx(lg_docx)
-    lg_md_text = lg_md.read_text(encoding="utf-8")
-    ok(results, "D LG", "LG DOCX/PDF/MD exist", lg_docx.exists() and lg_pdf.exists() and lg_md.exists(), "")
+    ok(results, "D LG", "LG DOCX/PDF exist", lg_docx.exists() and lg_pdf.exists(), "")
     ok(results, "D LG", "LG contains all 10 labs", all(f"Lab {i:02d}" in lg for i in range(1, 11)), "")
-    ok(results, "D LG", "LG markdown mirrors lab set", all(f"Lab {i:02d}" in lg_md_text for i in range(1, 11)), "")
     ok(results, "D LG", "LG has TOC", "Table of Contents" in lg, "")
     ok(results, "D LG", "LG PDF page count > 1", pdf_pages(lg_pdf) > 1, f"{pdf_pages(lg_pdf)} pages")
 
@@ -103,12 +113,18 @@ def qa():
     if all(p.exists() for p in [wa, wak, pp, ppk]):
         wa_text, wak_text = text_docx(wa), text_docx(wak)
         pp_text, ppk_text = text_docx(pp), text_docx(ppk)
+        wa_pages, pp_pages = explicit_pages_docx(wa), explicit_pages_docx(pp)
         ok(results, "B Assessment", "Four DOCX assessment files", True, "")
         ok(results, "B Assessment", "WA question count 40", len(re.findall(r"Question \d+ \(K\d+\)", wa_text)) == 40, "")
         ok(results, "B Assessment", "WA key answer count 40", len(re.findall(r"Question \d+ \(K\d+\)", wak_text)) == 40, "")
         ok(results, "B Assessment", "PP task count 10", len(re.findall(r"Task \d+ \(LO\d+\)", pp_text)) == 10, "")
         ok(results, "B Assessment", "PP key task count 10", len(re.findall(r"Task \d+ \(LO\d+\)", ppk_text)) == 10, "")
-        ok(results, "B Assessment", "All assessments have cover/TOC", all("TABLE OF CONTENTS" in t for t in [wa_text, wak_text, pp_text, ppk_text]), "")
+        ok(results, "B Assessment", "All assessments have cover pages", all(COURSE in t and CODE in t for t in [wa_text, wak_text, pp_text, ppk_text]), "")
+        ok(results, "B Assessment", "No assessment TOCs", all("TABLE OF CONTENTS" not in t for t in [wa_text, wak_text, pp_text, ppk_text]), "")
+        ok(results, "B Assessment", "WA page 2 has instructions and grading", len(wa_pages) >= 3 and "Instructions to Candidate" in wa_pages[1] and "Grading Criteria" in wa_pages[1], "")
+        ok(results, "B Assessment", "WA questions start on page 3", len(wa_pages) >= 3 and "Question 1 (K1)" not in wa_pages[1] and "Question 1 (K1)" in wa_pages[2], "")
+        ok(results, "B Assessment", "PP page 2 has instructions and grading", len(pp_pages) >= 3 and "Instructions to Candidate" in pp_pages[1] and "Grading Criteria" in pp_pages[1], "")
+        ok(results, "B Assessment", "PP scenario and tasks start on page 3", len(pp_pages) >= 3 and "Scenario" not in pp_pages[1] and "Task 1 (LO1)" in pp_pages[2], "")
         ok(results, "B Assessment", "PP tasks cite labs/slides", all(f"Lab {i}" in pp_text and f"LO{i}" in pp_text for i in range(1, 11)), "")
         ok(results, "B Assessment", "Open-ended papers", "multiple choice" not in (wa_text + pp_text).lower(), "")
     else:

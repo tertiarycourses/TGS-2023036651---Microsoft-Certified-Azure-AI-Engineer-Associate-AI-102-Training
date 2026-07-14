@@ -10,7 +10,7 @@ from docx.shared import Cm, Inches, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LAB_DIR = ROOT / ".codex-tmp-course" / "labs"
+LAB_DIR = ROOT / "labs"
 OUT = ROOT / "Assessments"
 ASSETS = OUT / "assets"
 
@@ -352,18 +352,46 @@ def trainee_info(doc):
 
 def instructions(doc, practical=False):
     section_heading(doc, "B: Instructions to Candidate")
+    duration = "90 minutes" if practical else "60 minutes"
     items = [
-        "This is an open-book assessment.",
+        "This is an individual, open-book assessment.",
+        f"You have {duration} to complete this assessment.",
         "Answer all questions or complete all tasks.",
         "Use your own words and show enough detail for the assessor to evaluate your understanding.",
         "You may refer to the course slides, learner guide and completed lab work.",
+        "Submit the completed assessment through the LMS/TMS portal as directed by the assessor.",
     ]
     if practical:
         items.extend([
             "Your practical answers must be based on the lab sequence completed in class.",
             "Attach screenshots, diagrams, tables or notes where requested.",
         ])
-    add_bullets(doc, items)
+    add_bullets(doc, items, size=9.6)
+
+
+def grading_criteria(doc, practical=False):
+    section_heading(doc, "C: Grading Criteria")
+    if practical:
+        standard = (
+            "Complete all 10 practical tasks and provide the required lab-aligned evidence. "
+            "Each task must meet its stated validation checkpoint."
+        )
+    else:
+        standard = (
+            "Answer all 40 short-answer questions and demonstrate the underpinning knowledge "
+            "required across the 10 AI-102 learning outcomes."
+        )
+    para(doc, standard, size=9.6, after=4)
+    table = doc.add_table(rows=2, cols=2)
+    table.style = "Table Grid"
+    rows = [
+        ("Assessment decision", "Competent (C) / Not Yet Competent (NYC)"),
+        ("Reassessment", "Any unmet criterion must be corrected or reassessed in accordance with assessment policy."),
+    ]
+    for row, (label, value) in zip(table.rows, rows):
+        cell_text(row.cells[0], label, bold=True, size=9.2)
+        cell_text(row.cells[1], value, size=9.2)
+        shade_cell(row.cells[0], LIGHT)
 
 
 def answer_box(doc, caption="Candidate answer / evidence"):
@@ -431,22 +459,12 @@ def build_wa_question(org_logo, course_logo, labs):
     questions = written_questions(labs)
     doc = base_doc()
     cover_page(doc, "Written Assessment", org_logo, course_logo)
-    toc_page(doc, "Written Assessment", [
-        ("Written Assessment (Short Answer Questions)", 3, 0),
-        ("Candidate Information and Instructions", 3, 0),
-        ("Assessment Alignment", 3, 0),
-        ("Written Questions", 4, 0),
-        ("Questions 1-10", 4, 1),
-        ("Questions 11-20", 8, 1),
-        ("Questions 21-30", 12, 1),
-        ("Questions 31-40", 16, 1),
-        ("For Official Use Only", 20, 0),
-    ])
     title_block(doc, "Written Assessment (Short Answer Questions)")
     trainee_info(doc)
     instructions(doc)
-    alignment_table(doc, labs)
-    section_heading(doc, "C: Written Questions")
+    grading_criteria(doc)
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    section_heading(doc, "D: Written Questions")
     para(doc, "Answer all 40 questions. Each question is open-ended and aligned to the AI-102 PPT slides and labs.", italic=True, color=MUTED)
     for i, q in enumerate(questions, 1):
         para(doc, f"Question {i} ({q['code']})", size=11.5, bold=True, color=DARK, before=8, after=2)
@@ -462,15 +480,6 @@ def build_wa_answer(org_logo, course_logo, labs):
     questions = written_questions(labs)
     doc = base_doc()
     cover_page(doc, "Answer to Written Assessment", org_logo, course_logo)
-    toc_page(doc, "Answer to Written Assessment", [
-        ("Answer to Written Assessment (Marking Guide)", 3, 0),
-        ("Assessment Alignment", 3, 0),
-        ("Model Answers", 4, 0),
-        ("Questions 1-10", 4, 1),
-        ("Questions 11-20", 6, 1),
-        ("Questions 21-30", 8, 1),
-        ("Questions 31-40", 10, 1),
-    ])
     title_block(doc, "Answer to Written Assessment (Marking Guide)")
     alignment_table(doc, labs)
     section_heading(doc, "Model Answers")
@@ -485,22 +494,14 @@ def build_wa_answer(org_logo, course_logo, labs):
 def build_pp_question(org_logo, course_logo, labs):
     doc = base_doc()
     cover_page(doc, "Practical Performance Assessment", org_logo, course_logo)
-    toc_page(doc, "Practical Performance Assessment", [
-        ("Practical Performance Assessment", 3, 0),
-        ("Candidate Information and Instructions", 3, 0),
-        ("Assessment Alignment", 3, 0),
-        ("Scenario and Practical Tasks", 4, 0),
-        ("Tasks 1-5", 4, 1),
-        ("Tasks 6-10", 9, 1),
-        ("For Official Use Only", 14, 0),
-    ])
     title_block(doc, "Practical Performance Assessment")
     trainee_info(doc)
     instructions(doc, practical=True)
-    alignment_table(doc, labs)
-    section_heading(doc, "C: Scenario")
+    grading_criteria(doc, practical=True)
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    section_heading(doc, "D: Scenario")
     para(doc, "A company is designing a production-ready customer support AI platform with Azure AI services. Complete the practical tasks below using the same sequence, scenarios and deliverables practised in the labs.", size=10.8)
-    section_heading(doc, "D: Practical Tasks")
+    section_heading(doc, "E: Practical Tasks")
     for i, lab in enumerate(labs, 1):
         para(doc, f"Task {i} ({lab['code']}) - {lab['short']}", size=11.5, bold=True, color=DARK, before=8, after=2)
         para(doc, f"Aligned to: Lab {lab['no']} and PPT slides {lab['slides']}", size=9, color=MUTED, italic=True, after=3)
@@ -518,13 +519,6 @@ def build_pp_question(org_logo, course_logo, labs):
 def build_pp_answer(org_logo, course_logo, labs):
     doc = base_doc()
     cover_page(doc, "Answer to Practical Performance Assessment", org_logo, course_logo)
-    toc_page(doc, "Answer to Practical Performance Assessment", [
-        ("Answer to Practical Performance Assessment (Marking Guide)", 3, 0),
-        ("Assessment Alignment", 3, 0),
-        ("Model Practical Evidence", 4, 0),
-        ("Tasks 1-5", 4, 1),
-        ("Tasks 6-10", 7, 1),
-    ])
     title_block(doc, "Answer to Practical Performance Assessment (Marking Guide)")
     alignment_table(doc, labs)
     section_heading(doc, "Model Practical Evidence")
