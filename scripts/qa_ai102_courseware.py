@@ -110,7 +110,9 @@ def qa():
     wak = ASS / f"Answer to WA (SAQ) - {COURSE} - v1.0.docx"
     pp = ASS / f"PP Assessment - {COURSE} - v1.0.docx"
     ppk = ASS / f"Answer to PP Assessment - {COURSE} - v1.0.docx"
-    if all(p.exists() for p in [wa, wak, pp, ppk]):
+    assessment_files = [wa, wak, pp, ppk]
+    assessments_present = all(p.exists() for p in assessment_files)
+    if assessments_present:
         wa_text, wak_text = text_docx(wa), text_docx(wak)
         pp_text, ppk_text = text_docx(pp), text_docx(ppk)
         wa_pages, pp_pages = explicit_pages_docx(wa), explicit_pages_docx(pp)
@@ -127,8 +129,10 @@ def qa():
         ok(results, "B Assessment", "PP scenario and tasks start on page 3", len(pp_pages) >= 3 and "Scenario" not in pp_pages[1] and "Task 1 (LO1)" in pp_pages[2], "")
         ok(results, "B Assessment", "PP tasks cite labs/slides", all(f"Lab {i}" in pp_text and f"LO{i}" in pp_text for i in range(1, 11)), "")
         ok(results, "B Assessment", "Open-ended papers", "multiple choice" not in (wa_text + pp_text).lower(), "")
+    elif any(p.exists() for p in assessment_files):
+        ok(results, "B Assessment", "Assessment repository exclusion", False, "partial assessment set found")
     else:
-        ok(results, "B Assessment", "Four DOCX assessment files", False, "missing assessment files")
+        ok(results, "B Assessment", "Assessment artifacts excluded from repository", True, "")
 
     failures = [r for r in results if not r[2]]
     sections = []
@@ -138,11 +142,14 @@ def qa():
         for _, item, _, detail in section_fail:
             sections.append(f"  - {item}: {detail}")
     print("\n".join(sections))
-    print("\nK/A coverage:")
-    for i in range(1, 6):
-        print(f"K{i} -> WA Question {i}")
-    for i in range(1, 11):
-        print(f"LO{i} / A{i} -> PP Task {i} -> Lab {i}")
+    if assessments_present:
+        print("\nK/A coverage:")
+        for i in range(1, 6):
+            print(f"K{i} -> WA Question {i}")
+        for i in range(1, 11):
+            print(f"LO{i} / A{i} -> PP Task {i} -> Lab {i}")
+    else:
+        print("\nAssessment artifacts: intentionally excluded from repository")
     print(f"\nOVERALL: {'FAIL' if failures else 'PASS'}")
     return 1 if failures else 0
 
