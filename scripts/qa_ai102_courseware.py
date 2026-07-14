@@ -115,8 +115,8 @@ def qa():
         pp_text, ppk_text = text_docx(pp), text_docx(ppk)
         wa_pages, pp_pages = explicit_pages_docx(wa), explicit_pages_docx(pp)
         ok(results, "B Assessment", "Four DOCX assessment files", True, "")
-        ok(results, "B Assessment", "WA question count 40", len(re.findall(r"Question \d+ \(K\d+\)", wa_text)) == 40, "")
-        ok(results, "B Assessment", "WA key answer count 40", len(re.findall(r"Question \d+ \(K\d+\)", wak_text)) == 40, "")
+        ok(results, "B Assessment", "WA question count 5", len(re.findall(r"Question \d+ \(K\d+\)", wa_text)) == 5, "")
+        ok(results, "B Assessment", "WA key answer count 5", len(re.findall(r"Question \d+ \(K\d+\)", wak_text)) == 5, "")
         ok(results, "B Assessment", "PP task count 10", len(re.findall(r"Task \d+ \(LO\d+\)", pp_text)) == 10, "")
         ok(results, "B Assessment", "PP key task count 10", len(re.findall(r"Task \d+ \(LO\d+\)", ppk_text)) == 10, "")
         ok(results, "B Assessment", "All assessments have cover pages", all(COURSE in t and CODE in t for t in [wa_text, wak_text, pp_text, ppk_text]), "")
@@ -139,7 +139,7 @@ def qa():
             sections.append(f"  - {item}: {detail}")
     print("\n".join(sections))
     print("\nK/A coverage:")
-    for i in range(1, 41):
+    for i in range(1, 6):
         print(f"K{i} -> WA Question {i}")
     for i in range(1, 11):
         print(f"LO{i} / A{i} -> PP Task {i} -> Lab {i}")

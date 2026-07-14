@@ -378,7 +378,7 @@ def grading_criteria(doc, practical=False):
         )
     else:
         standard = (
-            "Answer all 40 short-answer questions and demonstrate the underpinning knowledge "
+            "Answer all 5 short-answer questions and demonstrate the underpinning knowledge "
             "required across the 10 AI-102 learning outcomes."
         )
     para(doc, standard, size=9.6, after=4)
@@ -438,21 +438,68 @@ def alignment_table(doc, labs):
 
 
 def written_questions(labs):
-    questions = []
-    qn_no = 1
-    for lab in labs:
-        for question in lab["questions"]:
-            questions.append(
-                {
-                    "code": f"K{qn_no}",
-                    "source": lab["source"],
-                    "context": lab["scenario"],
-                    "question": question,
-                    "answer": ANSWER_KEY.get(question, "Award credit for an accurate answer aligned to the lab checkpoint and AI-102 concept."),
-                }
-            )
-            qn_no += 1
-    return questions
+    return [
+        {
+            "code": "K1",
+            "source": f"PPT slides {labs[0]['slides']} and {labs[1]['slides']}; Labs 1-2",
+            "context": "An organization is planning a secure, production-ready Azure AI solution that handles customer data and potentially harmful content.",
+            "question": "Explain how you would select and manage the Azure AI resources, secure access, monitor usage and cost, and apply responsible AI, content safety and governance controls.",
+            "answer": [
+                "Map business, data, integration, region, performance and cost requirements to the appropriate Azure AI services and deployment model.",
+                "Protect keys, prefer managed identity and least privilege, separate environments, rotate secrets and secure network access.",
+                "Monitor availability, latency, failures, consumption, cost, quality and safety signals with alerts and operational ownership.",
+                "Apply risk assessment, content filters, prompt shields, privacy controls, human escalation, incident response and accountable governance.",
+            ],
+        },
+        {
+            "code": "K2",
+            "source": f"PPT slides {labs[2]['slides']} and {labs[3]['slides']}; Labs 3-4",
+            "context": "A customer-support assistant must answer from approved company documents and may use controlled tools to complete support actions.",
+            "question": "Describe a grounded generative AI and agent solution, including RAG, prompt templates and evaluation, agent tools and permissions, orchestration, tracing, and human control of autonomous actions.",
+            "answer": [
+                "Use RAG to retrieve approved content, pass relevant context to the model and return grounded answers with traceable sources.",
+                "Use prompt templates and prompt flow to standardize instructions, inputs, constraints and outputs, then evaluate quality, groundedness and safety.",
+                "Give agents only approved tools and least-privilege permissions; orchestrate tool calls, memory, retrieval and any agent handoffs.",
+                "Trace prompts, retrieval and tool actions, constrain high-impact actions, and require human approval or escalation where appropriate.",
+            ],
+        },
+        {
+            "code": "K3",
+            "source": f"PPT slides {labs[4]['slides']} and {labs[5]['slides']}; Labs 5-6",
+            "context": "A multilingual support workflow must understand images, scanned text, written messages and spoken interactions.",
+            "question": "Explain how Azure vision, language, speech and translation capabilities could support this workflow, including when custom models, PII protection and human review are required.",
+            "answer": [
+                "Use image analysis, OCR, classification or object detection according to the visual requirement; train a custom vision model when prebuilt capabilities do not meet the domain need.",
+                "Treat video and image data as sensitive and apply consent, retention, privacy, bias and access controls.",
+                "Use language analysis for entities, sentiment, key phrases and PII detection before storing or sharing text.",
+                "Use speech recognition, SSML-based synthesis and translation, with human review for sensitive, regulated, ambiguous or customer-facing outputs.",
+            ],
+        },
+        {
+            "code": "K4",
+            "source": f"PPT slides {labs[6]['slides']} and {labs[7]['slides']}; Labs 7-8",
+            "context": "Users need a conversational interface that recognizes support requests and searches a large multilingual knowledge base.",
+            "question": "Design the language understanding, question answering and Azure AI Search components, covering intents, entities, training data, indexers, skillsets, vector search, semantic ranking, and backup or recovery.",
+            "answer": [
+                "Define representative intents, entities and varied utterances; train, test and improve the language project across expected wording and languages.",
+                "Use custom question answering for curated answers and preserve project exports, labels, configuration and versions for recovery.",
+                "Create a search index and data source, use an indexer to ingest content, and apply a skillset for OCR or other enrichment where required.",
+                "Use vector search for semantic similarity and semantic ranking to improve relevance, then validate queries, security trimming and result quality.",
+            ],
+        },
+        {
+            "code": "K5",
+            "source": f"PPT slides {labs[8]['slides']} and {labs[9]['slides']}; Labs 9-10",
+            "context": "The final AI platform must extract information from varied documents and integrate the results into a governed, end-to-end customer-support architecture.",
+            "question": "Explain how you would choose and validate Document Intelligence or Content Understanding models, integrate extracted content with search and generative AI, and operate the complete solution responsibly.",
+            "answer": [
+                "Use a prebuilt model for supported common forms, a custom model for domain-specific fields, and a composed model when multiple document types require routing.",
+                "Use confidence scores and validation rules to accept results, trigger exceptions or route low-confidence and high-impact cases to human review.",
+                "Use Content Understanding when the scenario spans documents, images, audio, video or text, and feed approved output into Azure AI Search and a grounded generative workflow.",
+                "Document the service architecture, security, monitoring, cost, governance and cleanup plan; use RAG for current external knowledge and fine-tuning only when model behavior needs adaptation.",
+            ],
+        },
+    ]
 
 
 def build_wa_question(org_logo, course_logo, labs):
@@ -465,7 +512,7 @@ def build_wa_question(org_logo, course_logo, labs):
     grading_criteria(doc)
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
     section_heading(doc, "D: Written Questions")
-    para(doc, "Answer all 40 questions. Each question is open-ended and aligned to the AI-102 PPT slides and labs.", italic=True, color=MUTED)
+    para(doc, "Answer all 5 questions. Each question is open-ended and aligned to the AI-102 PPT slides and labs.", italic=True, color=MUTED)
     for i, q in enumerate(questions, 1):
         para(doc, f"Question {i} ({q['code']})", size=11.5, bold=True, color=DARK, before=8, after=2)
         para(doc, f"Source: {q['source']}", size=9, color=MUTED, italic=True, after=2)
@@ -487,7 +534,7 @@ def build_wa_answer(org_logo, course_logo, labs):
     for i, q in enumerate(questions, 1):
         para(doc, f"Question {i} ({q['code']}) - {q['source']}", size=11.5, bold=True, color=DARK, before=8, after=2)
         para(doc, q["question"], size=10.5, bold=True, after=3)
-        add_bullets(doc, [q["answer"]], size=10.3)
+        add_bullets(doc, q["answer"], size=10.3)
     return doc
 
 
@@ -542,8 +589,8 @@ def main():
     labs = load_labs()
     if len(labs) != 10:
         raise SystemExit(f"Expected 10 labs, found {len(labs)}")
-    if sum(len(lab["questions"]) for lab in labs) != 40:
-        raise SystemExit("Expected 40 written questions from lab checkpoints")
+    if len(written_questions(labs)) != 5:
+        raise SystemExit("Expected exactly 5 written assessment questions")
     org_logo, course_logo = ensure_assets()
     files = [
         save_doc(build_wa_question(org_logo, course_logo, labs), f"WA (SAQ) - {COURSE_TITLE} - {VERSION}.docx"),
